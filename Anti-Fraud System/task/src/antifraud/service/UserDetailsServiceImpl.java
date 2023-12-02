@@ -1,6 +1,7 @@
 package antifraud.service;
 
 import antifraud.model.User;
+import antifraud.model.request.UserRequest;
 import antifraud.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -30,7 +31,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 .build();
     }
 
-    public User registerUser(User user) {
+    public User registerUser(UserRequest userReq) {
+        User user = new User(userReq.getName(), userReq.getUsername(), userReq.getPassword());
         return userRepository.save(user);
     }
 }

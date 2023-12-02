@@ -20,6 +20,11 @@ public class User {
     private String password;
 
     // getters and setters
+    public User(String name, String username, String password) {
+        this.name = name;
+        this.username = username;
+        this.password = password;
+    }
 
     public String getName() {
         return name;

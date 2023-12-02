@@ -1,6 +1,7 @@
 package antifraud.controller;
 
 import antifraud.model.User;
+import antifraud.model.request.UserRequest;
 import antifraud.service.UserDetailsServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class UserDetailController {
     }
 
     @PostMapping("/api/auth/user")
-    public ResponseEntity<?> registerUser(@RequestBody User user) {
+    public ResponseEntity<?> registerUser(@RequestBody UserRequest user) {
         User savedUser = userDetailsService.registerUser(user);
         if (savedUser == null) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);
