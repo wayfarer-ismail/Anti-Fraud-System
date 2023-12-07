@@ -1,7 +1,8 @@
 package antifraud.service;
 
-import antifraud.model.User;
+import antifraud.model.UserDAO;
 import antifraud.model.request.UserRequest;
+import antifraud.model.response.UserResponse;
 import antifraud.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -21,7 +22,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsernameIgnoreCase(username)
+        UserDAO user = userRepository.findByUsernameIgnoreCase(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
         return org.springframework.security.core.userdetails.User
@@ -31,8 +32,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 .build();
     }
 
-    public User registerUser(UserRequest userReq) {
-        User user = new User(userReq.getName(), userReq.getUsername(), userReq.getPassword());
-        return userRepository.save(user);
+    public UserResponse registerUser(UserRequest userReq) {
+        UserDAO user = new UserDAO(userReq.getName(), userReq.getUsername(), userReq.getPassword());
+        UserDAO savedUser = userRepository.save(user);
+        UserResponse userResponse = new UserResponse(savedUser.getId(), savedUser.getName(), savedUser.getUsername());
+        return userResponse;
     }
 }

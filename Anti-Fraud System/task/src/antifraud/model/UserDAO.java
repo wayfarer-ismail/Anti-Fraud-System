@@ -1,15 +1,13 @@
 package antifraud.model;
 
-//import javax.persistence.*;
-
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "users")
-public class User {
+public class UserDAO {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     private String name;
@@ -20,10 +18,16 @@ public class User {
     private String password;
 
     // getters and setters
-    public User(String name, String username, String password) {
+    public UserDAO(String name, String username, String password) {
         this.name = name;
         this.username = username;
         this.password = password;
+    }
+
+    public UserDAO() {}
+
+    public Long getId() {
+        return id;
     }
 
     public String getName() {

@@ -2,7 +2,6 @@ package antifraud.model.request;
 
 public class UserRequest {
     private String name;
-
     private String username;
 
     private String password;
@@ -29,5 +28,10 @@ public class UserRequest {
 
     public String getPassword() {
         return password;
+    }
+
+    public boolean hasEmptyFields() {
+        return name == null || username == null || password == null ||
+                name.isEmpty() || username.isEmpty() || password.isEmpty();
     }
 }
