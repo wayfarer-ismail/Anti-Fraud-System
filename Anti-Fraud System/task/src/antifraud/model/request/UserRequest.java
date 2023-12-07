@@ -11,6 +11,12 @@ public class UserRequest {
         // Default constructor
     }
 
+    public UserRequest(String name, String username, String password) {
+        this.name = name;
+        this.username = username;
+        this.password = password;
+    }
+
     // getters and setters
 
     public String getName() {
