@@ -37,6 +37,8 @@ public class SecurityConfig {
                 )
                 .headers(headers -> headers.frameOptions().disable())           // for Postman, the H2 console
                 .authorizeHttpRequests(requests -> requests                     // manage access
+                                .requestMatchers(HttpMethod.POST, "/api/antifraud/transaction").authenticated()
+                                .requestMatchers(HttpMethod.GET, "/api/auth/list").authenticated()
                                 .requestMatchers(HttpMethod.POST, "/api/auth/user").permitAll()
                                 .requestMatchers("/actuator/shutdown").permitAll()      // needs to run test
                         // other matchers

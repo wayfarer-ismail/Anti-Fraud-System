@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
@@ -39,11 +40,15 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 .build();
     }
 
-    public UserResponse registerUser(UserRequest userReq) {
+    public Optional<UserResponse> registerUser(UserRequest userReq) {
         UserDAO user = new UserDAO(userReq.getName(), userReq.getUsername(), passwordEncoder.passwordEncoder().encode(userReq.getPassword()));
+        if (userRepository.findByUsernameIgnoreCase(user.getUsername()).isPresent()) {
+            return Optional.empty();
+        }
+
         UserDAO savedUser = userRepository.save(user);
         UserResponse userResponse = new UserResponse(savedUser.getId(), savedUser.getName(), savedUser.getUsername());
-        return userResponse;
+        return Optional.of(userResponse);
     }
 
     public List<UserResponse> listUsers() {
