@@ -5,10 +5,7 @@ import antifraud.model.response.UserResponse;
 import antifraud.service.UserDetailsServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
@@ -38,5 +35,14 @@ public class UserDetailController {
     @GetMapping("/api/auth/list")
     public ResponseEntity<?> listUsers() {
         return new ResponseEntity<>(userDetailsService.listUsers(), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/api/auth/user/{username}")
+    public ResponseEntity<?> deleteUser(@PathVariable String username) {
+        if (userDetailsService.deleteUser(username)) {
+            return new ResponseEntity<>(HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 }

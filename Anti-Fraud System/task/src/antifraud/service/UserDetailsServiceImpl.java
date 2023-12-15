@@ -61,4 +61,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         }
         return userResponses;
     }
+
+    public boolean deleteUser(String username) {
+        return userRepository.deleteByNameIgnoreCase(username);
+    }
 }

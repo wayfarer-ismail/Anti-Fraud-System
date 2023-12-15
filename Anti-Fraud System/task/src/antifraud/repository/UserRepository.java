@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<UserDAO, Long> {
     Optional<UserDAO> findByUsernameIgnoreCase(String username);
+
+    boolean deleteByNameIgnoreCase(String username);
 }
