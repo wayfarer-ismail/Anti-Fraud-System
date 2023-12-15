@@ -5,12 +5,12 @@ import antifraud.model.UserDAO;
 import antifraud.model.request.UserRequest;
 import antifraud.model.response.UserResponse;
 import antifraud.repository.UserRepository;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -33,7 +33,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         UserDAO user = userRepository.findByUsernameIgnoreCase(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
-        return org.springframework.security.core.userdetails.User
+        return User
                 .withUsername(user.getUsername())
                 .password(user.getPassword())
                 .authorities(new ArrayList<>()) // add authorities/roles here
@@ -62,7 +62,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         return userResponses;
     }
 
-    public boolean deleteUser(String username) {
-        return userRepository.deleteByNameIgnoreCase(username);
+    @Transactional
+    public Integer deleteUser(String username) {
+        return userRepository.deleteByUsernameIgnoreCase(username);
     }
 }

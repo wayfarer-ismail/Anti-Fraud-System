@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -39,8 +40,8 @@ public class UserDetailController {
 
     @DeleteMapping("/api/auth/user/{username}")
     public ResponseEntity<?> deleteUser(@PathVariable String username) {
-        if (userDetailsService.deleteUser(username)) {
-            return new ResponseEntity<>(HttpStatus.OK);
+        if (userDetailsService.deleteUser(username) > 0) {
+            return new ResponseEntity<>(Map.of("username", username, "status", "Deleted successfully!"), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

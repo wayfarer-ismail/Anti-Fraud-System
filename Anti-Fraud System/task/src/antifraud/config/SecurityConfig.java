@@ -39,6 +39,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(requests -> requests                     // manage access
                                 .requestMatchers(HttpMethod.POST, "/api/antifraud/transaction").authenticated()
                                 .requestMatchers(HttpMethod.GET, "/api/auth/list").authenticated()
+                                .requestMatchers(HttpMethod.DELETE, "/api/auth/user/*").authenticated()
                                 .requestMatchers(HttpMethod.POST, "/api/auth/user").permitAll()
                                 .requestMatchers("/actuator/shutdown").permitAll()      // needs to run test
                         // other matchers
