@@ -41,7 +41,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     }
 
     public Optional<UserResponse> registerUser(UserRequest userReq) {
-        UserDAO user = new UserDAO(userReq.getName(), userReq.getUsername(), passwordEncoder.passwordEncoder().encode(userReq.getPassword()));
+        UserDAO user = new UserDAO(userReq.name(), userReq.username(), passwordEncoder.passwordEncoder().encode(userReq.password()));
         if (userRepository.findByUsernameIgnoreCase(user.getUsername()).isPresent()) {
             return Optional.empty();
         }
