@@ -13,4 +13,6 @@ public interface UserRepository extends JpaRepository<UserDAO, Long> {
      * @return number of deleted users
      */
     Integer deleteByUsernameIgnoreCase(String username);
+
+    boolean existsByUsernameIgnoreCase(String username);
 }

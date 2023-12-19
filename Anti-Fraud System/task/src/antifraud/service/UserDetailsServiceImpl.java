@@ -36,18 +36,24 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         return User
                 .withUsername(user.getUsername())
                 .password(user.getPassword())
-                .authorities(new ArrayList<>()) // add authorities/roles here
+                .authorities(user.getRole()) // add authorities/roles here
                 .build();
     }
 
     public Optional<UserResponse> registerUser(UserRequest userReq) {
         UserDAO user = new UserDAO(userReq.name(), userReq.username(), passwordEncoder.passwordEncoder().encode(userReq.password()));
-        if (userRepository.findByUsernameIgnoreCase(user.getUsername()).isPresent()) {
+        if (userRepository.existsByUsernameIgnoreCase(user.getUsername())) {
             return Optional.empty();
         }
 
+        if (userRepository.count() == 0) {
+            user.setRole("ROLE_ADMINISTRATOR");
+        } else {
+            user.setRole("ROLE_MERCHANT");
+        }
+
         UserDAO savedUser = userRepository.save(user);
-        UserResponse userResponse = new UserResponse(savedUser.getId(), savedUser.getName(), savedUser.getUsername());
+        UserResponse userResponse = new UserResponse(savedUser.getId(), savedUser.getName(), savedUser.getUsername(), savedUser.getRole());
         return Optional.of(userResponse);
     }
 
@@ -57,7 +63,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         //users.stream().map(user -> new UserResponse(user.getId(), user.getName(), user.getUsername())).toList();
         List<UserResponse> userResponses = new ArrayList<>();
         for (UserDAO user : users) {
-            userResponses.add(new UserResponse(user.getId(), user.getName(), user.getUsername()));
+            userResponses.add(new UserResponse(user.getId(), user.getName(), user.getUsername(), user.getRole()));
         }
         return userResponses;
     }

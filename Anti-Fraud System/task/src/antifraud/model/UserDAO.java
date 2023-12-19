@@ -17,11 +17,21 @@ public class UserDAO {
 
     private String password;
 
+    private String role;
+
     // getters and setters
+    public UserDAO(String name, String username, String password, String role) {
+        this.name = name;
+        this.username = username;
+        this.password = password;
+        this.role = role;
+    }
+
     public UserDAO(String name, String username, String password) {
         this.name = name;
         this.username = username;
         this.password = password;
+        this.role = "ROLE_Anonymous";
     }
 
     public UserDAO() {}
@@ -40,5 +50,13 @@ public class UserDAO {
 
     public String getPassword() {
         return password;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }
