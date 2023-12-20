@@ -47,9 +47,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         }
 
         if (userRepository.count() == 0) {
-            user.setRole("ROLE_ADMINISTRATOR");
+            user.setRole("ADMINISTRATOR");
         } else {
-            user.setRole("ROLE_MERCHANT");
+            user.setRole("MERCHANT");
         }
 
         UserDAO savedUser = userRepository.save(user);

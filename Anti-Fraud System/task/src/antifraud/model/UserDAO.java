@@ -31,7 +31,7 @@ public class UserDAO {
         this.name = name;
         this.username = username;
         this.password = password;
-        this.role = "ROLE_Anonymous";
+        this.role = "Anonymous";
     }
 
     public UserDAO() {}
