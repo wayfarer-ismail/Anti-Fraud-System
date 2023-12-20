@@ -5,6 +5,7 @@ import antifraud.model.UserDAO;
 import antifraud.model.request.UserRequest;
 import antifraud.model.response.UserResponse;
 import antifraud.repository.UserRepository;
+import antifraud.service.adapter.UserAdapter;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -33,11 +34,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         UserDAO user = userRepository.findByUsernameIgnoreCase(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
-        return User
-                .withUsername(user.getUsername())
-                .password(user.getPassword())
-                .authorities(user.getRole()) // add authorities/roles here
-                .build();
+        return new UserAdapter(user);
     }
 
     public Optional<UserResponse> registerUser(UserRequest userReq) {
@@ -48,6 +45,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         if (userRepository.count() == 0) {
             user.setRole("ADMINISTRATOR");
+            user.setAccountNonLocked(true);
         } else {
             user.setRole("MERCHANT");
         }

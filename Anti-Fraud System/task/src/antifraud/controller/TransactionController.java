@@ -14,7 +14,7 @@ public class TransactionController {
 
     @PostMapping("/api/antifraud/transaction")
     public ResponseEntity<?> createTransaction(@RequestBody TransactionRequest request) {
-        double amount = request.getAmount();
+        double amount = request.amount();
         if (amount <= 0) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } else if (amount <= 200) {
