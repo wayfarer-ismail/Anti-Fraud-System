@@ -51,7 +51,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         }
 
         UserDAO savedUser = userRepository.save(user);
-        UserResponse userResponse = new UserResponse(savedUser.getId(), savedUser.getName(), savedUser.getUsername(), savedUser.getRole());
+        UserResponse userResponse = savedUser.toUserResponse();
         return Optional.of(userResponse);
     }
 
@@ -61,7 +61,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         //users.stream().map(user -> new UserResponse(user.getId(), user.getName(), user.getUsername())).toList();
         List<UserResponse> userResponses = new ArrayList<>();
         for (UserDAO user : users) {
-            userResponses.add(new UserResponse(user.getId(), user.getName(), user.getUsername(), user.getRole()));
+            userResponses.add(user.toUserResponse());
         }
         return userResponses;
     }

@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
+@RequestMapping("/api/auth")
 public class UserDetailController {
 
     UserDetailsServiceImpl userDetailsService;
@@ -19,7 +20,7 @@ public class UserDetailController {
         this.userDetailsService = userDetailsService;
     }
 
-    @PostMapping("/api/auth/user")
+    @PostMapping("/user")
     public ResponseEntity<?> registerUser(@RequestBody UserRequest user) {
         if (user.hasEmptyFields()) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -33,12 +34,12 @@ public class UserDetailController {
         }
     }
 
-    @GetMapping("/api/auth/list")
+    @GetMapping("/list")
     public ResponseEntity<?> listUsers() {
         return new ResponseEntity<>(userDetailsService.listUsers(), HttpStatus.OK);
     }
 
-    @DeleteMapping("/api/auth/user/{username}")
+    @DeleteMapping("/user/{username}")
     public ResponseEntity<?> deleteUser(@PathVariable String username) {
         if (userDetailsService.deleteUser(username) > 0) {
             return new ResponseEntity<>(Map.of("username", username, "status", "Deleted successfully!"), HttpStatus.OK);

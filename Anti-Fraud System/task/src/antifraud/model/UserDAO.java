@@ -1,5 +1,6 @@
 package antifraud.model;
 
+import antifraud.model.response.UserResponse;
 import jakarta.persistence.*;
 
 @Entity
@@ -92,5 +93,9 @@ public class UserDAO {
 
     public void setCredentialsNonExpired(boolean credentialsNonExpired) {
         this.credentialsNonExpired = credentialsNonExpired;
+    }
+
+    public UserResponse toUserResponse() {
+        return new UserResponse(this.id, this.name, this.username, this.role);
     }
 }
