@@ -70,4 +70,30 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public Integer deleteUser(String username) {
         return userRepository.deleteByUsernameIgnoreCase(username);
     }
+
+    public Optional<UserResponse> updateUserRole(String username, String role) {
+        Optional<UserDAO> user = userRepository.findByUsernameIgnoreCase(username);
+        if (user.isPresent()) {
+            user.get().setRole(role);
+            UserDAO updatedUser = userRepository.save(user.get());
+            return Optional.of(updatedUser.toUserResponse());
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    public Optional<UserResponse> updateUserLock(String username, String operation) {
+        Optional<UserDAO> user = userRepository.findByUsernameIgnoreCase(username);
+        if (user.isPresent()) {
+            if (operation.equals("lock")) {
+                user.get().setAccountNonLocked(false);
+            } else if (operation.equals("unlock")) {
+                user.get().setAccountNonLocked(true);
+            }
+            UserDAO updatedUser = userRepository.save(user.get());
+            return Optional.of(updatedUser.toUserResponse());
+        } else {
+            return Optional.empty();
+        }
+    }
 }
