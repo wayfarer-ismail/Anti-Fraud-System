@@ -1,6 +1,7 @@
 package antifraud.service;
 
 import antifraud.config.PasswordEncoderConfig;
+import antifraud.exception.BadRequestException;
 import antifraud.model.UserDAO;
 import antifraud.model.request.UserRequest;
 import antifraud.model.response.UserResponse;
@@ -85,6 +86,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public Optional<UserResponse> updateUserLock(String username, String operation) {
         Optional<UserDAO> user = userRepository.findByUsernameIgnoreCase(username);
         if (user.isPresent()) {
+            if (user.get().getRole().equals("ADMINISTRATOR")) {
+                throw new BadRequestException("Cannot lock/unlock administrator account!");
+            }
             if (operation.equals("lock")) {
                 user.get().setAccountNonLocked(false);
             } else if (operation.equals("unlock")) {
