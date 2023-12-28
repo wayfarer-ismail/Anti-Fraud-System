@@ -89,9 +89,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             if (user.get().getRole().equals("ADMINISTRATOR")) {
                 throw new BadRequestException("Cannot lock/unlock administrator account!");
             }
-            if (operation.equals("lock")) {
+            if (operation.equals("LOCK")) {
                 user.get().setAccountNonLocked(false);
-            } else if (operation.equals("unlock")) {
+            } else if (operation.equals("UNLOCK")) {
                 user.get().setAccountNonLocked(true);
             }
             UserDAO updatedUser = userRepository.save(user.get());
