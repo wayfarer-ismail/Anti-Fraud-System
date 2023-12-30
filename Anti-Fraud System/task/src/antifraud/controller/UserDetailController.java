@@ -51,12 +51,8 @@ public class UserDetailController {
     @PutMapping("/role")
     public ResponseEntity<?> updateUserRole(@RequestBody Map<String, String> request) {
         if (request.containsKey("username") && request.containsKey("role")) {
-            Optional<UserResponse> updatedUser = userDetailsService.updateUserRole(request.get("username"), request.get("role"));
-            if (updatedUser.isPresent()) {
-                return new ResponseEntity<>(updatedUser, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
+            UserResponse updatedUser = userDetailsService.updateUserRole(request.get("username"), request.get("role"));
+            return new ResponseEntity<>(updatedUser, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -65,16 +61,12 @@ public class UserDetailController {
     @PutMapping("/access")
     public ResponseEntity<?> updateUserLock(@RequestBody Map<String, String> request) {
         if (request.containsKey("username") && request.containsKey("operation")) {
-            Optional<UserResponse> updatedUser = userDetailsService.updateUserLock(request.get("username"), request.get("operation"));
-            if (updatedUser.isPresent()) {
-                return new ResponseEntity<>(Map.of(
-                        "status",
-                        String.format("User %s %sed!", updatedUser.get().username(), request.get("operation").toLowerCase())
-                ),
-                        HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
+            UserResponse updatedUser = userDetailsService.updateUserLock(request.get("username"), request.get("operation"));
+            return new ResponseEntity<>(Map.of(
+                    "status",
+                    String.format("User %s %sed!", updatedUser.username(), request.get("operation").toLowerCase())
+            ),
+                    HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }

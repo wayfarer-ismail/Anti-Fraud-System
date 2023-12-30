@@ -2,11 +2,15 @@ package antifraud.service;
 
 import antifraud.config.PasswordEncoderConfig;
 import antifraud.exception.BadRequestException;
+import antifraud.exception.ConflictException;
 import antifraud.model.UserDAO;
 import antifraud.model.request.UserRequest;
 import antifraud.model.response.UserResponse;
 import antifraud.repository.UserRepository;
 import antifraud.service.adapter.UserAdapter;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -14,6 +18,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -44,6 +51,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             return Optional.empty();
         }
 
+        saveCurrentUser("register");
+
         if (userRepository.count() == 0) {
             user.setRole("ADMINISTRATOR");
             user.setAccountNonLocked(true);
@@ -57,6 +66,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     }
 
     public List<UserResponse> listUsers() {
+        saveCurrentUser("list");
+
         List<UserDAO> users = userRepository.findAll();
         users.sort(Comparator.comparing(UserDAO::getId));
         //users.stream().map(user -> new UserResponse(user.getId(), user.getName(), user.getUsername())).toList();
@@ -72,32 +83,59 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         return userRepository.deleteByUsernameIgnoreCase(username);
     }
 
-    public Optional<UserResponse> updateUserRole(String username, String role) {
-        Optional<UserDAO> user = userRepository.findByUsernameIgnoreCase(username);
-        if (user.isPresent()) {
-            user.get().setRole(role);
-            UserDAO updatedUser = userRepository.save(user.get());
-            return Optional.of(updatedUser.toUserResponse());
-        } else {
-            return Optional.empty();
+    public UserResponse updateUserRole(String username, String role) {
+        UserDAO user = userRepository.findByUsernameIgnoreCase(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+
+        if (!role.matches("SUPPORT|MERCHANT")) {
+            throw new BadRequestException("Invalid role!");
         }
+
+        if (user.getRole().equals(role)) {
+            throw new ConflictException("User already has this role!");
+        }
+
+        user.setRole(role);
+        if (role.equals("SUPPORT")) {
+            user.setAccountNonLocked(true);
+        }
+        //user.setAccountNonLocked(true);
+        UserDAO updatedUser = userRepository.save(user);
+        return updatedUser.toUserResponse();
     }
 
-    public Optional<UserResponse> updateUserLock(String username, String operation) {
-        Optional<UserDAO> user = userRepository.findByUsernameIgnoreCase(username);
-        if (user.isPresent()) {
-            if (user.get().getRole().equals("ADMINISTRATOR")) {
-                throw new BadRequestException("Cannot lock/unlock administrator account!");
-            }
-            if (operation.equals("LOCK")) {
-                user.get().setAccountNonLocked(false);
-            } else if (operation.equals("UNLOCK")) {
-                user.get().setAccountNonLocked(true);
-            }
-            UserDAO updatedUser = userRepository.save(user.get());
-            return Optional.of(updatedUser.toUserResponse());
-        } else {
-            return Optional.empty();
+    public UserResponse updateUserLock(String username, String operation) {
+        UserDAO user = userRepository.findByUsernameIgnoreCase(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+
+        saveCurrentUser(operation.toLowerCase() + " " + user.getUsername() + " " + user.getRole());
+
+        if (user.getRole().equals("ADMINISTRATOR")) {
+            throw new BadRequestException("Cannot lock/unlock administrator account!");
+        }
+        if (operation.equalsIgnoreCase("LOCK")) {
+            user.setAccountNonLocked(false);
+        } else if (operation.equalsIgnoreCase("UNLOCK")) {
+            user.setAccountNonLocked(true);
+        }
+        UserDAO updatedUser = userRepository.save(user);
+        return updatedUser.toUserResponse();
+    }
+
+    public static void saveCurrentUser(String action) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        String info = "anon";
+        String filePath = "logs.txt";
+
+        if (!(auth.getPrincipal() instanceof String)) {
+            info = auth.getPrincipal().toString();
+        }
+
+        try (FileWriter out = new FileWriter(filePath, true)) {
+            out.write( action + ": " + info + "\n");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

@@ -49,4 +49,17 @@ public class UserAdapter implements UserDetails {
     public boolean isEnabled() {
         return user.isEnabled();
     }
+
+    @Override
+    public String toString() {
+        return "UserAdapter{" +
+                "user=" + getUsername() + ", "
+                + getAuthorities() + ", "
+                + isAccountNonExpired() + ", "
+                + isAccountNonLocked() + ", "
+                + isCredentialsNonExpired() + ", "
+                + isEnabled()
+                +
+                '}';
+    }
 }
