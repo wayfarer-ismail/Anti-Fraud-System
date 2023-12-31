@@ -51,14 +51,14 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             return Optional.empty();
         }
 
-        saveCurrentUser("register");
-
         if (userRepository.count() == 0) {
             user.setRole("ADMINISTRATOR");
             user.setAccountNonLocked(true);
         } else {
             user.setRole("MERCHANT");
         }
+
+        //saveCurrentUser("register " + user.getUsername() + " " + user.getRole() + " " + user.isAccountNonLocked());
 
         UserDAO savedUser = userRepository.save(user);
         UserResponse userResponse = savedUser.toUserResponse();
@@ -80,12 +80,22 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Transactional
     public Integer deleteUser(String username) {
+
+        saveCurrentUser("delete " + username);
+        // check if its an admin user
+        UserDAO user = userRepository.findByUsernameIgnoreCase(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+        if (user.getRole().equals("ADMINISTRATOR")) {
+            throw new BadRequestException("Cannot delete administrator account!");
+        }
         return userRepository.deleteByUsernameIgnoreCase(username);
     }
 
     public UserResponse updateUserRole(String username, String role) {
         UserDAO user = userRepository.findByUsernameIgnoreCase(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+
+        saveCurrentUser("update for: " + user.getUsername() + " " + user.getRole());
 
         if (!role.matches("SUPPORT|MERCHANT")) {
             throw new BadRequestException("Invalid role!");
@@ -108,8 +118,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         UserDAO user = userRepository.findByUsernameIgnoreCase(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
-        saveCurrentUser(operation.toLowerCase() + " " + user.getUsername() + " " + user.getRole());
-
         if (user.getRole().equals("ADMINISTRATOR")) {
             throw new BadRequestException("Cannot lock/unlock administrator account!");
         }
@@ -118,6 +126,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         } else if (operation.equalsIgnoreCase("UNLOCK")) {
             user.setAccountNonLocked(true);
         }
+
+        saveCurrentUser(operation + " " + user.getUsername() + " " + user.getRole() + " " + user.isAccountNonLocked());
+
         UserDAO updatedUser = userRepository.save(user);
         return updatedUser.toUserResponse();
     }
@@ -128,7 +139,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         String info = "anon";
         String filePath = "logs.txt";
 
-        if (!(auth.getPrincipal() instanceof String)) {
+        if (auth != null && !(auth.getPrincipal() instanceof String)) {
             info = auth.getPrincipal().toString();
         }
 

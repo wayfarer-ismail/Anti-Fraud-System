@@ -5,6 +5,9 @@ import antifraud.model.response.UserResponse;
 import antifraud.service.UserDetailsServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -26,6 +29,8 @@ public class UserDetailController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
+        UserDetailsServiceImpl.saveCurrentUser("register: name: " + user.username() + ", password: " + user.password());
+
         Optional<UserResponse> savedUser = userDetailsService.registerUser(user);
         if (savedUser.isPresent()) {
             return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
@@ -35,7 +40,8 @@ public class UserDetailController {
     }
 
     @GetMapping("/list")
-    public ResponseEntity<?> listUsers() {
+    public ResponseEntity<?> listUsers(@AuthenticationPrincipal UserDetails details) {
+        //UserDetailsServiceImpl.saveCurrentUser(details.getUsername() + " list: ");
         return new ResponseEntity<>(userDetailsService.listUsers(), HttpStatus.OK);
     }
 
