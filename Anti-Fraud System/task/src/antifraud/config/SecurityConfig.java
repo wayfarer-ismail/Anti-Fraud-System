@@ -39,8 +39,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(requests -> requests                     // manage access
                         .requestMatchers(HttpMethod.POST, "/api/auth/user").permitAll()
                         .requestMatchers("/actuator/shutdown").permitAll()      // needs to run test
-                        .requestMatchers(HttpMethod.GET, "/api/auth/list").permitAll()
-                        //.requestMatchers(HttpMethod.GET, "/api/auth/list").hasAnyRole("ADMINISTRATOR", "SUPPORT", "MERCHANT")
+                        .requestMatchers(HttpMethod.GET, "/api/auth/list").hasAnyRole("ADMINISTRATOR", "SUPPORT")
                         .requestMatchers(HttpMethod.POST, "/api/antifraud/transaction").hasRole("MERCHANT")
                         .requestMatchers(HttpMethod.DELETE, "/api/auth/user/*").hasRole("ADMINISTRATOR")
                         .requestMatchers(HttpMethod.PUT, "/api/auth/access").hasRole("ADMINISTRATOR")

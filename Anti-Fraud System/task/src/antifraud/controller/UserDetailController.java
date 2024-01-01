@@ -1,13 +1,12 @@
 package antifraud.controller;
 
+import antifraud.exception.ConflictException;
 import antifraud.model.request.UserRequest;
 import antifraud.model.response.UserResponse;
 import antifraud.service.UserDetailsServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -40,8 +39,7 @@ public class UserDetailController {
     }
 
     @GetMapping("/list")
-    public ResponseEntity<?> listUsers(@AuthenticationPrincipal UserDetails details) {
-        //UserDetailsServiceImpl.saveCurrentUser(details.getUsername() + " list: ");
+    public ResponseEntity<?> listUsers() {
         return new ResponseEntity<>(userDetailsService.listUsers(), HttpStatus.OK);
     }
 
@@ -56,10 +54,15 @@ public class UserDetailController {
 
     @PutMapping("/role")
     public ResponseEntity<?> updateUserRole(@RequestBody Map<String, String> request) {
-        if (request.containsKey("username") && request.containsKey("role")) {
+        try {
             UserResponse updatedUser = userDetailsService.updateUserRole(request.get("username"), request.get("role"));
             return new ResponseEntity<>(updatedUser, HttpStatus.OK);
-        } else {
+
+        } catch (UsernameNotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (ConflictException e) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }

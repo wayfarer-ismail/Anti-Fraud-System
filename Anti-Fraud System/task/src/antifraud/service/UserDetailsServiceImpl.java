@@ -9,9 +9,7 @@ import antifraud.model.response.UserResponse;
 import antifraud.repository.UserRepository;
 import antifraud.service.adapter.UserAdapter;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -58,8 +55,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             user.setRole("MERCHANT");
         }
 
-        //saveCurrentUser("register " + user.getUsername() + " " + user.getRole() + " " + user.isAccountNonLocked());
-
         UserDAO savedUser = userRepository.save(user);
         UserResponse userResponse = savedUser.toUserResponse();
         return Optional.of(userResponse);
@@ -80,12 +75,11 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Transactional
     public Integer deleteUser(String username) {
-
         saveCurrentUser("delete " + username);
-        // check if its an admin user
-        UserDAO user = userRepository.findByUsernameIgnoreCase(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
-        if (user.getRole().equals("ADMINISTRATOR")) {
+        System.out.println("delete " + username);
+        Optional<UserDAO> user = userRepository.findByUsernameIgnoreCase(username);
+
+        if (user.isPresent() && user.get().getRole().equals("ADMINISTRATOR")) {
             throw new BadRequestException("Cannot delete administrator account!");
         }
         return userRepository.deleteByUsernameIgnoreCase(username);
@@ -106,11 +100,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         }
 
         user.setRole(role);
-        if (role.equals("SUPPORT")) {
-            user.setAccountNonLocked(true);
-        }
-        //user.setAccountNonLocked(true);
         UserDAO updatedUser = userRepository.save(user);
+        System.out.println("4");
         return updatedUser.toUserResponse();
     }
 
