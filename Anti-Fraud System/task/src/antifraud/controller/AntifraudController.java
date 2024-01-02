@@ -3,16 +3,15 @@ package antifraud.controller;
 import antifraud.model.request.TransactionRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
 @RestController
-public class TransactionController {
+@RequestMapping("/api/antifraud")
+public class AntifraudController {
 
-    @PostMapping("/api/antifraud/transaction")
+    @PostMapping("/transaction")
     public ResponseEntity<?> createTransaction(@RequestBody TransactionRequest request) {
         double amount = request.amount();
         if (amount <= 0) {
@@ -25,5 +24,9 @@ public class TransactionController {
             return new ResponseEntity<>(Map.of("result", "PROHIBITED"), HttpStatus.OK);
         }
     }
-}
 
+    @PostMapping("/{ip}")
+    public ResponseEntity<?> saveSuspiciousIp(@PathVariable String ip) {
+        return new ResponseEntity<>(Map.of("ip", ip, "status", "Saved successfully!"), HttpStatus.OK);
+    }
+}
