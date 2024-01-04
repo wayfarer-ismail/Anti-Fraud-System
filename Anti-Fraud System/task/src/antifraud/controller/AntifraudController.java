@@ -1,6 +1,8 @@
 package antifraud.controller;
 
+import antifraud.model.SaveTransactionTuple;
 import antifraud.model.request.TransactionRequest;
+import antifraud.service.TransactionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,18 +13,16 @@ import java.util.Map;
 @RequestMapping("/api/antifraud")
 public class AntifraudController {
 
+    TransactionService transactionService;
+
+    public AntifraudController(TransactionService transactionService) {
+        this.transactionService = transactionService;
+    }
+
     @PostMapping("/transaction")
     public ResponseEntity<?> createTransaction(@RequestBody TransactionRequest request) {
-        double amount = request.amount();
-        if (amount <= 0) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } else if (amount <= 200) {
-            return new ResponseEntity<>(Map.of("result", "ALLOWED"), HttpStatus.OK);
-        } else if (amount <= 1500) {
-            return new ResponseEntity<>(Map.of("result", "MANUAL_PROCESSING"), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(Map.of("result", "PROHIBITED"), HttpStatus.OK);
-        }
+        SaveTransactionTuple transactionTuple = transactionService.saveTransaction(request);
+        return new ResponseEntity<>(transactionTuple, HttpStatus.OK);
     }
 
     @PostMapping("/{ip}")

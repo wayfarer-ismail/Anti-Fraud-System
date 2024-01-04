@@ -1,5 +1,6 @@
 package antifraud.model;
 
+import antifraud.model.request.TransactionRequest;
 import jakarta.persistence.*;
 
 @Entity
@@ -20,6 +21,10 @@ public class Transaction {
         this.amount = amount;
         this.ip = ip;
         this.number = number;
+    }
+
+    public static Transaction fromTransactionRequest(TransactionRequest transaction) {
+        return new Transaction(transaction.amount(), transaction.ip(), transaction.number());
     }
 
     public Long getId() {

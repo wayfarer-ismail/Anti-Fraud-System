@@ -1,4 +1,4 @@
 package antifraud.model.request;
 
-public record TransactionRequest(double amount, String ip, String number) {
+public record TransactionRequest(Long amount, String ip, String number) {
 }
