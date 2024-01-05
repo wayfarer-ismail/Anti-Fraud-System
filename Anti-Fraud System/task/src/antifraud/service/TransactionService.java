@@ -19,8 +19,8 @@ public class TransactionService {
     }
 
     public SaveTransactionTuple saveTransaction(TransactionRequest transactionRequest) {
+        validateTransaction(transactionRequest);
         Transaction transaction = Transaction.fromTransactionRequest(transactionRequest);
-        validateTransaction(transaction);
 
         ArrayList<String> info = new ArrayList<>(3);
         String result;
@@ -39,14 +39,17 @@ public class TransactionService {
         return new SaveTransactionTuple(result, info);
     }
 
-    private void validateTransaction(Transaction transaction) {
-        if (transaction.getAmount() <= 0) {
+    private void validateTransaction(TransactionRequest transaction) {
+        if (transaction == null) {
+            throw new BadRequestException("Transaction must not be null");
+        }
+        if (transaction.amount() == null || transaction.amount() <= 0) {
             throw new BadRequestException("Amount must be greater than 0");
         }
-        if (transaction.getIp() == null || transaction.getIp().isEmpty()) {
+        if (transaction.ip() == null || transaction.ip().isEmpty()) {
             throw new BadRequestException("IP must not be empty");
         }
-        if (transaction.getNumber() == null || transaction.getNumber().isEmpty()) {
+        if (transaction.number() == null || transaction.number().isEmpty()) {
             throw new BadRequestException("Number must not be empty");
         }
     }
