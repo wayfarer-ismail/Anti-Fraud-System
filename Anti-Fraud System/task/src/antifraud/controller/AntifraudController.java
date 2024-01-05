@@ -1,8 +1,11 @@
 package antifraud.controller;
 
 import antifraud.exception.BadRequestException;
+import antifraud.model.Ip;
 import antifraud.model.SaveTransactionTuple;
 import antifraud.model.request.TransactionRequest;
+import antifraud.model.response.IpRequest;
+import antifraud.service.IpService;
 import antifraud.service.TransactionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,9 +18,11 @@ import java.util.Map;
 public class AntifraudController {
 
     TransactionService transactionService;
+    IpService ipService;
 
-    public AntifraudController(TransactionService transactionService) {
+    public AntifraudController(TransactionService transactionService, IpService ipService) {
         this.transactionService = transactionService;
+        this.ipService = ipService;
     }
 
     @PostMapping("/transaction")
@@ -30,13 +35,20 @@ public class AntifraudController {
         }
     }
 
-    @PostMapping("/suspicous-ip")
-    public ResponseEntity<?> saveSuspiciousIp(@RequestBody String ip) {
-        return new ResponseEntity<>(Map.of("ip", ip, "status", "Saved successfully!"), HttpStatus.OK);
+    @PostMapping("/suspicious-ip")
+    public ResponseEntity<?> saveSuspiciousIp(@RequestBody IpRequest ip) {
+        Ip savedIp = ipService.saveSuspiciousIp(ip.getIp());
+        return new ResponseEntity<>(savedIp, HttpStatus.OK);
     }
 
-    @GetMapping("/suspicous-ip")
+    @GetMapping("/suspicious-ip")
     public ResponseEntity<?> getSuspiciousIps() {
-        return new ResponseEntity<>(Map.of("status", "OK"), HttpStatus.OK);
+        return new ResponseEntity<>(ipService.listSuspiciousIps(), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/suspicious-ip/{ip}")
+    public ResponseEntity<?> deleteSuspiciousIp(@PathVariable String ip) {
+        ipService.deleteSuspiciousIp(ip);
+        return new ResponseEntity<>(Map.of("ip", ip, "status", "Deleted successfully!"), HttpStatus.OK);
     }
 }
