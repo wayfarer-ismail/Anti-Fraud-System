@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface IpRepository extends JpaRepository<Ip, Long> {
     Integer deleteByIp(String ip);
+
+    boolean existsByIp(String ip);
 }

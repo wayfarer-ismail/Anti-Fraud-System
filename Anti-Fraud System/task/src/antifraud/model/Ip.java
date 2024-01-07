@@ -9,6 +9,7 @@ public class Ip {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
+    @Column(unique = true)
 
     private String ip;
 

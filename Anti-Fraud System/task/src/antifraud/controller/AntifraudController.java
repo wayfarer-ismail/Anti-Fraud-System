@@ -1,6 +1,8 @@
 package antifraud.controller;
 
 import antifraud.exception.BadRequestException;
+import antifraud.exception.ConflictException;
+import antifraud.exception.NotFoundException;
 import antifraud.model.Ip;
 import antifraud.model.SaveTransactionTuple;
 import antifraud.model.request.TransactionRequest;
@@ -37,8 +39,14 @@ public class AntifraudController {
 
     @PostMapping("/suspicious-ip")
     public ResponseEntity<?> saveSuspiciousIp(@RequestBody IpRequest ip) {
-        Ip savedIp = ipService.saveSuspiciousIp(ip.getIp());
-        return new ResponseEntity<>(savedIp, HttpStatus.OK);
+        try {
+            Ip savedIp = ipService.saveSuspiciousIp(ip.getIp());
+            return new ResponseEntity<>(savedIp, HttpStatus.OK);
+        } catch (ConflictException e) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        } catch (BadRequestException e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
     }
 
     @GetMapping("/suspicious-ip")
@@ -48,7 +56,13 @@ public class AntifraudController {
 
     @DeleteMapping("/suspicious-ip/{ip}")
     public ResponseEntity<?> deleteSuspiciousIp(@PathVariable String ip) {
-        ipService.deleteSuspiciousIp(ip);
-        return new ResponseEntity<>(Map.of("ip", ip, "status", "Deleted successfully!"), HttpStatus.OK);
+        try {
+            ipService.deleteSuspiciousIp(ip);
+            return new ResponseEntity<>(Map.of("status", "IP " + ip + " successfully removed!"), HttpStatus.OK);
+        } catch (BadRequestException e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } catch (NotFoundException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 }
