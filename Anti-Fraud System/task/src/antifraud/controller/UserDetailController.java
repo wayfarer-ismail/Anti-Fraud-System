@@ -1,5 +1,6 @@
 package antifraud.controller;
 
+import antifraud.exception.BadRequestException;
 import antifraud.exception.ConflictException;
 import antifraud.model.request.UserRequest;
 import antifraud.model.response.UserResponse;
@@ -10,7 +11,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -24,17 +24,13 @@ public class UserDetailController {
 
     @PostMapping("/user")
     public ResponseEntity<?> registerUser(@RequestBody UserRequest user) {
-        if (user.hasEmptyFields()) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-
-        UserDetailsServiceImpl.saveCurrentUser("register: name: " + user.username() + ", password: " + user.password());
-
-        Optional<UserResponse> savedUser = userDetailsService.registerUser(user);
-        if (savedUser.isPresent()) {
+        try {
+            UserResponse savedUser = userDetailsService.registerUser(user);
             return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
-        } else {
-            return new ResponseEntity<>(HttpStatus.CONFLICT); // user already exists
+        } catch (ConflictException e) {
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        } catch (BadRequestException e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 

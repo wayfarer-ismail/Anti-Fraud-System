@@ -8,16 +8,12 @@ import antifraud.model.request.UserRequest;
 import antifraud.model.response.UserResponse;
 import antifraud.repository.UserRepository;
 import antifraud.service.adapter.UserAdapter;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -42,10 +38,14 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         return new UserAdapter(user);
     }
 
-    public Optional<UserResponse> registerUser(UserRequest userReq) {
+    public UserResponse registerUser(UserRequest userReq) {
+        if (userReq.hasEmptyFields()) {
+            throw new BadRequestException("Empty fields!");
+        }
+
         UserDAO user = new UserDAO(userReq.name(), userReq.username(), passwordEncoder.passwordEncoder().encode(userReq.password()));
         if (userRepository.existsByUsernameIgnoreCase(user.getUsername())) {
-            return Optional.empty();
+            throw new ConflictException("User already exists!");
         }
 
         if (userRepository.count() == 0) {
@@ -56,13 +56,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         }
 
         UserDAO savedUser = userRepository.save(user);
-        UserResponse userResponse = savedUser.toUserResponse();
-        return Optional.of(userResponse);
+        return savedUser.toUserResponse();
     }
 
     public List<UserResponse> listUsers() {
-        saveCurrentUser("list");
-
         List<UserDAO> users = userRepository.findAll();
         users.sort(Comparator.comparing(UserDAO::getId));
         //users.stream().map(user -> new UserResponse(user.getId(), user.getName(), user.getUsername())).toList();
@@ -75,8 +72,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Transactional
     public Integer deleteUser(String username) {
-        saveCurrentUser("delete " + username);
-        System.out.println("delete " + username);
         Optional<UserDAO> user = userRepository.findByUsernameIgnoreCase(username);
 
         if (user.isPresent() && user.get().getRole().equals("ADMINISTRATOR")) {
@@ -89,8 +84,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         UserDAO user = userRepository.findByUsernameIgnoreCase(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
-        saveCurrentUser("update for: " + user.getUsername() + " " + user.getRole());
-
         if (!role.matches("SUPPORT|MERCHANT")) {
             throw new BadRequestException("Invalid role!");
         }
@@ -101,7 +94,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         user.setRole(role);
         UserDAO updatedUser = userRepository.save(user);
-        System.out.println("4");
         return updatedUser.toUserResponse();
     }
 
@@ -118,26 +110,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             user.setAccountNonLocked(true);
         }
 
-        saveCurrentUser(operation + " " + user.getUsername() + " " + user.getRole() + " " + user.isAccountNonLocked());
-
         UserDAO updatedUser = userRepository.save(user);
         return updatedUser.toUserResponse();
     }
 
-    public static void saveCurrentUser(String action) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        String info = "anon";
-        String filePath = "logs.txt";
-
-        if (auth != null && !(auth.getPrincipal() instanceof String)) {
-            info = auth.getPrincipal().toString();
-        }
-
-        try (FileWriter out = new FileWriter(filePath, true)) {
-            out.write( action + ": " + info + "\n");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 }
