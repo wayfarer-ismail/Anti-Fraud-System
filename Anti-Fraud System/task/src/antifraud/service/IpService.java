@@ -56,4 +56,8 @@ public class IpService {
             }
         }
     }
+
+    public boolean isSuspicious(String ip) {
+        return ipRepository.existsByIp(ip);
+    }
 }

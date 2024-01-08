@@ -13,9 +13,13 @@ import java.util.ArrayList;
 public class TransactionService {
 
     TransactionRepository transactionRepository;
+    IpService ipService;
+    StolenCardService stolenCardService;
 
-    public TransactionService(TransactionRepository transactionRepository) {
+    public TransactionService(TransactionRepository transactionRepository, IpService ipService, StolenCardService stolenCardService) {
         this.transactionRepository = transactionRepository;
+        this.ipService = ipService;
+        this.stolenCardService = stolenCardService;
     }
 
     public SaveTransactionTuple saveTransaction(TransactionRequest transactionRequest) {
@@ -23,20 +27,35 @@ public class TransactionService {
         Transaction transaction = Transaction.fromTransactionRequest(transactionRequest);
 
         ArrayList<String> info = new ArrayList<>(3);
-        String result;
-        if (transaction.getAmount() <= 200) {
-            result = "ALLOWED";
-            info.add("none");
-        } else if (transaction.getAmount() <= 1500) {
-            result = "MANUAL_PROCESSING";
-            info.add("amount");
-        } else {
+        String result = "";
+
+        if (stolenCardService.isStolen(transaction.getNumber())) {
+            result = "PROHIBITED";
+            info.add("card-number");
+        }
+
+        if (ipService.isSuspicious(transaction.getIp())) {
+            result = "PROHIBITED";
+            info.add("ip");
+        }
+
+        if (transaction.getAmount()> 1500) {
             result = "PROHIBITED";
             info.add("amount");
         }
 
+        if (!result.equals("PROHIBITED")) {
+            if (transaction.getAmount() > 200) {
+                result = "MANUAL_PROCESSING";
+                info.add("amount");
+            } else {
+                result = "ALLOWED";
+                info.add("none");
+            }
+        }
+
         transactionRepository.save(transaction);
-        return new SaveTransactionTuple(result, info);
+        return new SaveTransactionTuple(result, info.stream().sorted().toList());
     }
 
     private void validateTransaction(TransactionRequest transaction) {
