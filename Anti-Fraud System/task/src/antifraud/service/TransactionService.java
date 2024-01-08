@@ -25,26 +25,27 @@ public class TransactionService {
     public SaveTransactionTuple saveTransaction(TransactionRequest transactionRequest) {
         validateTransaction(transactionRequest);
         Transaction transaction = Transaction.fromTransactionRequest(transactionRequest);
+        transactionRepository.save(transaction);
+        return resolveTransaction(transaction);
+    }
 
+    private SaveTransactionTuple resolveTransaction(Transaction transaction) {
         ArrayList<String> info = new ArrayList<>(3);
-        String result = "";
+        String result;
 
         if (stolenCardService.isStolen(transaction.getNumber())) {
-            result = "PROHIBITED";
             info.add("card-number");
         }
 
         if (ipService.isSuspicious(transaction.getIp())) {
-            result = "PROHIBITED";
             info.add("ip");
         }
 
         if (transaction.getAmount()> 1500) {
-            result = "PROHIBITED";
             info.add("amount");
         }
 
-        if (!result.equals("PROHIBITED")) {
+        if (info.isEmpty()) {
             if (transaction.getAmount() > 200) {
                 result = "MANUAL_PROCESSING";
                 info.add("amount");
@@ -52,10 +53,12 @@ public class TransactionService {
                 result = "ALLOWED";
                 info.add("none");
             }
+        } else {
+            result = "PROHIBITED";
         }
 
-        transactionRepository.save(transaction);
         return new SaveTransactionTuple(result, info.stream().sorted().toList());
+
     }
 
     private void validateTransaction(TransactionRequest transaction) {
