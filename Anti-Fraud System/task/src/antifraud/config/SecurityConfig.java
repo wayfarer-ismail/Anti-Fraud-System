@@ -47,6 +47,9 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/api/antifraud/suspicious-ip").hasRole("SUPPORT")
                                 .requestMatchers(HttpMethod.POST, "/api/antifraud/suspicious-ip").hasRole("SUPPORT")
                                 .requestMatchers(HttpMethod.DELETE, "/api/antifraud/suspicious-ip/*").hasRole("SUPPORT")
+                                .requestMatchers(HttpMethod.GET, "/api/antifraud/stolencard").hasRole("SUPPORT")
+                                .requestMatchers(HttpMethod.POST, "/api/antifraud/stolencard").hasRole("SUPPORT")
+                                .requestMatchers(HttpMethod.DELETE, "/api/antifraud/stolencard/*").hasRole("SUPPORT")
                         // other matchers
                 )
                 .sessionManagement(session -> session
