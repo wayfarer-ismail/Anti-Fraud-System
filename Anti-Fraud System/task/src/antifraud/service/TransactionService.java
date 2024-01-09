@@ -1,9 +1,9 @@
 package antifraud.service;
 
 import antifraud.exception.BadRequestException;
-import antifraud.model.SaveTransactionTuple;
 import antifraud.model.Transaction;
 import antifraud.model.request.TransactionRequest;
+import antifraud.model.response.TransactionResponse;
 import antifraud.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
@@ -22,14 +22,14 @@ public class TransactionService {
         this.stolenCardService = stolenCardService;
     }
 
-    public SaveTransactionTuple saveTransaction(TransactionRequest transactionRequest) {
+    public TransactionResponse saveTransaction(TransactionRequest transactionRequest) {
         validateTransaction(transactionRequest);
         Transaction transaction = Transaction.fromTransactionRequest(transactionRequest);
         transactionRepository.save(transaction);
         return resolveTransaction(transaction);
     }
 
-    private SaveTransactionTuple resolveTransaction(Transaction transaction) {
+    private TransactionResponse resolveTransaction(Transaction transaction) {
         ArrayList<String> info = new ArrayList<>(3);
         String result;
 
@@ -57,8 +57,7 @@ public class TransactionService {
             result = "PROHIBITED";
         }
 
-        return new SaveTransactionTuple(result, info.stream().sorted().toList());
-
+        return new TransactionResponse(result, info.stream().sorted().toList());
     }
 
     private void validateTransaction(TransactionRequest transaction) {

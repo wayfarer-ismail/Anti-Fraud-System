@@ -1,8 +1,8 @@
 package antifraud.controller;
 
 import antifraud.exception.BadRequestException;
-import antifraud.model.SaveTransactionTuple;
 import antifraud.model.request.TransactionRequest;
+import antifraud.model.response.TransactionResponse;
 import antifraud.service.TransactionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,8 +21,8 @@ public class TransactionController {
     @PostMapping
     public ResponseEntity<?> createTransaction(@RequestBody TransactionRequest request) {
         try {
-            SaveTransactionTuple transactionTuple = transactionService.saveTransaction(request);
-            return new ResponseEntity<>(transactionTuple, HttpStatus.OK);
+            TransactionResponse transactionResponse = transactionService.saveTransaction(request);
+            return new ResponseEntity<>(transactionResponse, HttpStatus.OK);
         } catch (BadRequestException e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
