@@ -7,7 +7,10 @@ import antifraud.model.response.TransactionResponse;
 import antifraud.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
 
 @Service
 public class TransactionService {
@@ -24,14 +27,26 @@ public class TransactionService {
 
     public TransactionResponse saveTransaction(TransactionRequest transactionRequest) {
         validateTransaction(transactionRequest);
+
         Transaction transaction = Transaction.fromTransactionRequest(transactionRequest);
         transactionRepository.save(transaction);
         return resolveTransaction(transaction);
     }
 
     private TransactionResponse resolveTransaction(Transaction transaction) {
+        List<Transaction> transactions = transactionRepository.findByNumber(transaction.getNumber());
         ArrayList<String> info = new ArrayList<>(3);
         String result;
+
+        // check if the card number is associated with transactions from more than two regions in the past hour
+        if (transactionsFromNRegions(transaction, transactions) > 2) {
+            info.add("region-correlation");
+        }
+
+        // if card number has been used by more than 2 other ip addresses in the past hour
+        if (transactionsFromNIpAddresses(transaction, transactions) > 2) {
+            info.add("ip-correlation");
+        }
 
         if (stolenCardService.isStolen(transaction.getNumber())) {
             info.add("card-number");
@@ -45,19 +60,47 @@ public class TransactionService {
             info.add("amount");
         }
 
+        // if not prohibited
         if (info.isEmpty()) {
+            if (transactionsFromNRegions(transaction, transactions) > 1) {
+                info.add("region-correlation");
+            }
+            if (transactionsFromNIpAddresses(transaction, transactions) > 1) {
+                info.add("ip-correlation");
+            }
             if (transaction.getAmount() > 200) {
-                result = "MANUAL_PROCESSING";
                 info.add("amount");
-            } else {
+            }
+
+            // if not passed for manual processing
+            if (info.isEmpty()) {
                 result = "ALLOWED";
                 info.add("none");
+            } else {
+                result = "MANUAL_PROCESSING";
             }
         } else {
             result = "PROHIBITED";
         }
 
         return new TransactionResponse(result, info.stream().sorted().toList());
+    }
+
+    private long transactionsFromN(List<Transaction> transactions, Predicate<Transaction> filter) {
+        LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
+
+        return  transactions.stream()
+                .filter(t -> t.getDateTime().isAfter(oneHourAgo))
+                .filter(filter)
+                .count();
+    }
+
+    private long transactionsFromNRegions(Transaction transaction, List<Transaction> transactions) {
+        return transactionsFromN(transactions, t -> !t.getRegion().equals(transaction.getRegion()));
+    }
+
+    private long transactionsFromNIpAddresses(Transaction transaction, List<Transaction> transactions) {
+        return transactionsFromN(transactions, t -> !t.getIp().equals(transaction.getIp()));
     }
 
     private void validateTransaction(TransactionRequest transaction) {
