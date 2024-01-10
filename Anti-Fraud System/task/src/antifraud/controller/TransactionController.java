@@ -19,7 +19,7 @@ public class TransactionController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createTransaction(@RequestBody TransactionRequest request) {
+    public ResponseEntity<?> saveTransaction(@RequestBody TransactionRequest request) {
         try {
             TransactionResponse transactionResponse = transactionService.saveTransaction(request);
             return new ResponseEntity<>(transactionResponse, HttpStatus.OK);

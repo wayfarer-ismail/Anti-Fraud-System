@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 @Service
@@ -39,12 +40,12 @@ public class TransactionService {
         String result;
 
         // check if the card number is associated with transactions from more than two regions in the past hour
-        if (transactionsFromNRegions(transaction, transactions) > 2) {
+        if (countDistinctRegions(transaction, transactions) > 2) {
             info.add("region-correlation");
         }
 
         // if card number has been used by more than 2 other ip addresses in the past hour
-        if (transactionsFromNIpAddresses(transaction, transactions) > 2) {
+        if (countDistinctIp(transaction, transactions) > 2) {
             info.add("ip-correlation");
         }
 
@@ -62,10 +63,11 @@ public class TransactionService {
 
         // if not prohibited
         if (info.isEmpty()) {
-            if (transactionsFromNRegions(transaction, transactions) > 1) {
+            if (countDistinctRegions(transaction, transactions) > 1) {
                 info.add("region-correlation");
             }
-            if (transactionsFromNIpAddresses(transaction, transactions) > 1) {
+
+            if (countDistinctIp(transaction, transactions) > 1) {
                 info.add("ip-correlation");
             }
             if (transaction.getAmount() > 200) {
@@ -86,21 +88,27 @@ public class TransactionService {
         return new TransactionResponse(result, info.stream().sorted().toList());
     }
 
-    private long transactionsFromN(List<Transaction> transactions, Predicate<Transaction> filter) {
-        LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
+    private long countTransactionsFromDistinct(Transaction transaction,
+                                               List<Transaction> transactions,
+                                               Predicate<Transaction> filter,
+                                               Function<Transaction, Object> groupBy) {
+        LocalDateTime oneHourAgo = transaction.getDateTime().minusHours(1);
+        LocalDateTime current = transaction.getDateTime();
 
         return  transactions.stream()
-                .filter(t -> t.getDateTime().isAfter(oneHourAgo))
+                .filter(t -> t.getDateTime().isAfter(oneHourAgo) && t.getDateTime().isBefore(current))
                 .filter(filter)
+                .map(groupBy)
+                .distinct()
                 .count();
     }
 
-    private long transactionsFromNRegions(Transaction transaction, List<Transaction> transactions) {
-        return transactionsFromN(transactions, t -> !t.getRegion().equals(transaction.getRegion()));
+    private long countDistinctRegions(Transaction transaction, List<Transaction> transactions) {
+        return countTransactionsFromDistinct(transaction, transactions, t -> !t.getRegion().equals(transaction.getRegion()), Transaction::getRegion);
     }
 
-    private long transactionsFromNIpAddresses(Transaction transaction, List<Transaction> transactions) {
-        return transactionsFromN(transactions, t -> !t.getIp().equals(transaction.getIp()));
+    private long countDistinctIp(Transaction transaction, List<Transaction> transactions) {
+        return countTransactionsFromDistinct(transaction, transactions, t -> !t.getIp().equals(transaction.getIp()), Transaction::getIp);
     }
 
     private void validateTransaction(TransactionRequest transaction) {
