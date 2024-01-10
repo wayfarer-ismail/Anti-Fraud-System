@@ -4,7 +4,7 @@ import antifraud.exception.BadRequestException;
 import antifraud.exception.ConflictException;
 import antifraud.exception.NotFoundException;
 import antifraud.model.Ip;
-import antifraud.model.response.IpRequest;
+import antifraud.model.request.IpRequest;
 import antifraud.service.IpService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

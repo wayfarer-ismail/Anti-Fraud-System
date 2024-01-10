@@ -1,4 +1,4 @@
-package antifraud.model.response;
+package antifraud.model.request;
 
 public class IpRequest {
     private String ip;

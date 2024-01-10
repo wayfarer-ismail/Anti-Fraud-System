@@ -1,13 +1,17 @@
 package antifraud.service;
 
 import antifraud.exception.BadRequestException;
-import antifraud.model.SaveTransactionTuple;
 import antifraud.model.Transaction;
 import antifraud.model.request.TransactionRequest;
+import antifraud.model.response.TransactionResponse;
 import antifraud.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 @Service
 public class TransactionService {
@@ -22,16 +26,28 @@ public class TransactionService {
         this.stolenCardService = stolenCardService;
     }
 
-    public SaveTransactionTuple saveTransaction(TransactionRequest transactionRequest) {
+    public TransactionResponse saveTransaction(TransactionRequest transactionRequest) {
         validateTransaction(transactionRequest);
+
         Transaction transaction = Transaction.fromTransactionRequest(transactionRequest);
         transactionRepository.save(transaction);
         return resolveTransaction(transaction);
     }
 
-    private SaveTransactionTuple resolveTransaction(Transaction transaction) {
+    private TransactionResponse resolveTransaction(Transaction transaction) {
+        List<Transaction> transactions = transactionRepository.findByNumber(transaction.getNumber());
         ArrayList<String> info = new ArrayList<>(3);
         String result;
+
+        // check if the card number is associated with transactions from more than two regions in the past hour
+        if (countDistinctRegions(transaction, transactions) > 2) {
+            info.add("region-correlation");
+        }
+
+        // if card number has been used by more than 2 other ip addresses in the past hour
+        if (countDistinctIp(transaction, transactions) > 2) {
+            info.add("ip-correlation");
+        }
 
         if (stolenCardService.isStolen(transaction.getNumber())) {
             info.add("card-number");
@@ -45,20 +61,54 @@ public class TransactionService {
             info.add("amount");
         }
 
+        // if not prohibited
         if (info.isEmpty()) {
+            if (countDistinctRegions(transaction, transactions) > 1) {
+                info.add("region-correlation");
+            }
+
+            if (countDistinctIp(transaction, transactions) > 1) {
+                info.add("ip-correlation");
+            }
             if (transaction.getAmount() > 200) {
-                result = "MANUAL_PROCESSING";
                 info.add("amount");
-            } else {
+            }
+
+            // if not passed for manual processing
+            if (info.isEmpty()) {
                 result = "ALLOWED";
                 info.add("none");
+            } else {
+                result = "MANUAL_PROCESSING";
             }
         } else {
             result = "PROHIBITED";
         }
 
-        return new SaveTransactionTuple(result, info.stream().sorted().toList());
+        return new TransactionResponse(result, info.stream().sorted().toList());
+    }
 
+    private long countTransactionsFromDistinct(Transaction transaction,
+                                               List<Transaction> transactions,
+                                               Predicate<Transaction> filter,
+                                               Function<Transaction, Object> groupBy) {
+        LocalDateTime oneHourAgo = transaction.getDateTime().minusHours(1);
+        LocalDateTime current = transaction.getDateTime();
+
+        return  transactions.stream()
+                .filter(t -> t.getDateTime().isAfter(oneHourAgo) && t.getDateTime().isBefore(current))
+                .filter(filter)
+                .map(groupBy)
+                .distinct()
+                .count();
+    }
+
+    private long countDistinctRegions(Transaction transaction, List<Transaction> transactions) {
+        return countTransactionsFromDistinct(transaction, transactions, t -> !t.getRegion().equals(transaction.getRegion()), Transaction::getRegion);
+    }
+
+    private long countDistinctIp(Transaction transaction, List<Transaction> transactions) {
+        return countTransactionsFromDistinct(transaction, transactions, t -> !t.getIp().equals(transaction.getIp()), Transaction::getIp);
     }
 
     private void validateTransaction(TransactionRequest transaction) {
