@@ -2,6 +2,7 @@ package antifraud.service;
 
 import antifraud.exception.BadRequestException;
 import antifraud.model.Transaction;
+import antifraud.model.request.TransactionFeedbackRequest;
 import antifraud.model.request.TransactionRequest;
 import antifraud.model.response.TransactionResponse;
 import antifraud.repository.TransactionRepository;
@@ -124,5 +125,13 @@ public class TransactionService {
         if (transaction.number() == null || transaction.number().isEmpty()) {
             throw new BadRequestException("Number must not be empty");
         }
+    }
+
+    public Transaction updateTransactionFeedback(TransactionFeedbackRequest request) {
+        Transaction transaction = transactionRepository.findById(request.transactionId())
+                .orElseThrow(() -> new BadRequestException("Transaction not found"));
+
+        //transaction.setFeedback(request.feedback());
+        return transactionRepository.save(transaction);
     }
 }
