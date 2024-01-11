@@ -13,14 +13,14 @@ public class Transaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private Long transactionId;
     private Long amount;
     private String ip;
     private String number;
     private Region region;
-    private LocalDateTime dateTime;
-    private String result;
-    private Feedback feedback;
+    private LocalDateTime date;
+    private Feedback result = Feedback.NONE;
+    private Feedback feedback = Feedback.NONE;
 
     public Transaction() {
     }
@@ -30,15 +30,15 @@ public class Transaction {
         this.ip = ip;
         this.number = number;
         this.region = region;
-        this.dateTime = dateTime;
+        this.date = dateTime;
     }
 
     public static Transaction fromTransactionRequest(TransactionRequest transaction) {
         return new Transaction(transaction.amount(), transaction.ip(), transaction.number(), Region.valueOf(transaction.region()), LocalDateTime.parse(transaction.date()));
     }
 
-    public Long getId() {
-        return id;
+    public Long getTransactionId() {
+        return transactionId;
     }
 
     public Long getAmount() {
@@ -57,16 +57,20 @@ public class Transaction {
         return region;
     }
 
-    public LocalDateTime getDateTime() {
-        return dateTime;
+    public LocalDateTime getDate() {
+        return date;
     }
 
-    public String getResult() {
+    public Feedback getResult() {
         return result;
     }
 
-    public Feedback getFeedback() {
-        return feedback;
+    public String getFeedback() {
+        return feedback.toString();
+    }
+
+    public void setResult(Feedback result) {
+        this.result = result;
     }
 
     public void setFeedback(Feedback status) {
@@ -74,6 +78,6 @@ public class Transaction {
     }
 
     public boolean hasFeedback() {
-        return feedback != null;
+        return feedback != Feedback.NONE;
     }
 }

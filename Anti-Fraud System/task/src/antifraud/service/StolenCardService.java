@@ -42,7 +42,7 @@ public class StolenCardService {
         }
     }
 
-    private void validateLuhnAlgorithm(String number) {
+    public static void validateLuhnAlgorithm(String number) {
         int sum = 0;
         boolean alternate = false;
         for (int i = number.length() - 1; i >= 0; i--) {
