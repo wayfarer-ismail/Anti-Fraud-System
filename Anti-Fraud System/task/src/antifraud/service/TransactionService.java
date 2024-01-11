@@ -1,7 +1,10 @@
 package antifraud.service;
 
 import antifraud.exception.BadRequestException;
+import antifraud.exception.ConflictException;
+import antifraud.exception.NotFoundException;
 import antifraud.model.Transaction;
+import antifraud.model.enums.Feedback;
 import antifraud.model.request.TransactionFeedbackRequest;
 import antifraud.model.request.TransactionRequest;
 import antifraud.model.response.TransactionResponse;
@@ -129,9 +132,18 @@ public class TransactionService {
 
     public Transaction updateTransactionFeedback(TransactionFeedbackRequest request) {
         Transaction transaction = transactionRepository.findById(request.transactionId())
-                .orElseThrow(() -> new BadRequestException("Transaction not found"));
+                .orElseThrow(() -> new NotFoundException("Transaction not found"));
 
-        //transaction.setFeedback(request.feedback());
+        if (transaction.hasFeedback()) {
+            throw new ConflictException("Feedback already given");
+        }
+
+        Feedback status = Feedback.valueOf(request.feedback());
+        transaction.setFeedback(status);
         return transactionRepository.save(transaction);
+    }
+
+    public List<Transaction> list() {
+        return transactionRepository.findAll();
     }
 }

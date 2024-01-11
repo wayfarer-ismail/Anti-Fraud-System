@@ -1,5 +1,6 @@
 package antifraud.model;
 
+import antifraud.model.enums.Feedback;
 import antifraud.model.enums.Region;
 import antifraud.model.request.TransactionRequest;
 import jakarta.persistence.*;
@@ -18,6 +19,8 @@ public class Transaction {
     private String number;
     private Region region;
     private LocalDateTime dateTime;
+    private String result;
+    private Feedback feedback;
 
     public Transaction() {
     }
@@ -56,5 +59,21 @@ public class Transaction {
 
     public LocalDateTime getDateTime() {
         return dateTime;
+    }
+
+    public String getResult() {
+        return result;
+    }
+
+    public Feedback getFeedback() {
+        return feedback;
+    }
+
+    public void setFeedback(Feedback status) {
+        this.feedback = status;
+    }
+
+    public boolean hasFeedback() {
+        return feedback != null;
     }
 }
