@@ -26,6 +26,8 @@ public class TransactionService {
     TransactionRepository transactionRepository;
     IpService ipService;
     StolenCardService stolenCardService;
+    double maxAllow = 200;
+    double maxManual = 1500;
 
     public TransactionService(TransactionRepository transactionRepository, IpService ipService, StolenCardService stolenCardService) {
         this.transactionRepository = transactionRepository;
@@ -47,8 +49,13 @@ public class TransactionService {
     private TransactionResponse resolveTransaction(Transaction transaction) {
         List<Transaction> transactions = transactionRepository.findByNumber(transaction.getNumber());
         ArrayList<String> info = new ArrayList<>(3);
-        Feedback result;
 
+        Feedback result = applyRules(transaction, transactions, info);
+
+        return new TransactionResponse(result, info.stream().sorted().toList());
+    }
+
+    private Feedback applyRules(Transaction transaction, List<Transaction> transactions, ArrayList<String> info) {
         // check if the card number is associated with transactions from more than two regions in the past hour
         if (countDistinctRegions(transaction, transactions) > 2) {
             info.add("region-correlation");
@@ -67,7 +74,7 @@ public class TransactionService {
             info.add("ip");
         }
 
-        if (transaction.getAmount()> 1500) {
+        if (transaction.getAmount()> maxManual) {
             info.add("amount");
         }
 
@@ -80,22 +87,20 @@ public class TransactionService {
             if (countDistinctIp(transaction, transactions) > 1) {
                 info.add("ip-correlation");
             }
-            if (transaction.getAmount() > 200) {
+            if (transaction.getAmount() > maxAllow) {
                 info.add("amount");
             }
 
             // if not passed for manual processing
             if (info.isEmpty()) {
-                result = ALLOWED;
                 info.add("none");
+                return ALLOWED;
             } else {
-                result = MANUAL_PROCESSING;
+                return MANUAL_PROCESSING;
             }
         } else {
-            result = PROHIBITED;
+            return PROHIBITED;
         }
-
-        return new TransactionResponse(result, info.stream().sorted().toList());
     }
 
     private long countTransactionsFromDistinct(Transaction transaction,
@@ -140,16 +145,45 @@ public class TransactionService {
         Transaction transaction = transactionRepository.findById(request.transactionId())
                 .orElseThrow(() -> new NotFoundException("Transaction not found"));
 
-        if (transaction.hasFeedback()) {
-            throw new ConflictException("Feedback already given");
-        }
-
         Feedback feedback = Feedback.valueOf(request.feedback());
         if (feedback == transaction.getResult()) {
             throw new UnprocessableEntityException("Feedback must not be equal to result");
         }
+
+        if (transaction.hasFeedback()) {
+            throw new ConflictException("Feedback already given");
+        }
+
         transaction.setFeedback(feedback);
+        adjustMaxValues(transaction);
+        System.out.println("maxAllow = " + maxAllow);
+        System.out.println("maxManual = " + maxManual);
         return transactionRepository.save(transaction);
+    }
+
+    private void adjustMaxValues(Transaction transaction) {
+        Feedback validity = transaction.getResult();
+        Feedback feedback = Feedback.valueOf(transaction.getFeedback());
+
+        if (validity == ALLOWED) {
+            if (feedback == PROHIBITED) {
+                maxManual = Math.ceil(0.8 * maxManual - 0.2 * transaction.getAmount());
+            }
+            maxAllow = Math.ceil(0.8 * maxAllow - 0.2 * transaction.getAmount());
+
+        } else if (validity == MANUAL_PROCESSING) {
+            if (feedback == ALLOWED) {
+                maxAllow = Math.ceil(0.8 * maxAllow + 0.2 * transaction.getAmount());
+            } else if (feedback == PROHIBITED) {
+                maxManual = Math.ceil(0.8 * maxManual - 0.2 * transaction.getAmount());
+            }
+
+        } else if (validity == PROHIBITED) {
+            if (feedback == ALLOWED) {
+                maxAllow = Math.ceil(0.8 * maxAllow + 0.2 * transaction.getAmount());
+            }
+            maxManual = Math.ceil(0.8 * maxManual + 0.2 * transaction.getAmount());
+        }
     }
 
     public List<Transaction> list() {
