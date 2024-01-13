@@ -5,10 +5,12 @@ import antifraud.exception.ConflictException;
 import antifraud.exception.NotFoundException;
 import antifraud.exception.UnprocessableEntityException;
 import antifraud.model.Transaction;
+import antifraud.model.TransactionMaxValues;
 import antifraud.model.enums.Feedback;
 import antifraud.model.request.TransactionFeedbackRequest;
 import antifraud.model.request.TransactionRequest;
 import antifraud.model.response.TransactionResponse;
+import antifraud.repository.TransactionMaxValuesRepository;
 import antifraud.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 
@@ -24,15 +26,25 @@ import static antifraud.model.enums.Feedback.*;
 public class TransactionService {
 
     TransactionRepository transactionRepository;
+    TransactionMaxValuesRepository transactionMaxValuesRepository;
     IpService ipService;
     StolenCardService stolenCardService;
     double maxAllow = 200;
     double maxManual = 1500;
 
-    public TransactionService(TransactionRepository transactionRepository, IpService ipService, StolenCardService stolenCardService) {
+    public TransactionService(TransactionRepository transactionRepository,
+                              IpService ipService,
+                              StolenCardService stolenCardService,
+                              TransactionMaxValuesRepository transactionMaxValuesRepository) {
         this.transactionRepository = transactionRepository;
         this.ipService = ipService;
         this.stolenCardService = stolenCardService;
+        this.transactionMaxValuesRepository = transactionMaxValuesRepository;
+
+        TransactionMaxValues maxValues = transactionMaxValuesRepository
+                .findById(1L).orElse(new TransactionMaxValues(maxAllow, maxManual));
+        maxAllow = maxValues.getMaxAllow();
+        maxManual = maxValues.getMaxManual();
     }
 
     public TransactionResponse saveTransaction(TransactionRequest transactionRequest) {
@@ -119,11 +131,13 @@ public class TransactionService {
     }
 
     private long countDistinctRegions(Transaction transaction, List<Transaction> transactions) {
-        return countTransactionsFromDistinct(transaction, transactions, t -> !t.getRegion().equals(transaction.getRegion()), Transaction::getRegion);
+        return countTransactionsFromDistinct(transaction, transactions,
+                t -> !t.getRegion().equals(transaction.getRegion()), Transaction::getRegion);
     }
 
     private long countDistinctIp(Transaction transaction, List<Transaction> transactions) {
-        return countTransactionsFromDistinct(transaction, transactions, t -> !t.getIp().equals(transaction.getIp()), Transaction::getIp);
+        return countTransactionsFromDistinct(transaction, transactions,
+                t -> !t.getIp().equals(transaction.getIp()), Transaction::getIp);
     }
 
     private void validateFields(TransactionRequest transaction) {
@@ -184,6 +198,12 @@ public class TransactionService {
             }
             maxManual = Math.ceil(0.8 * maxManual + 0.2 * transaction.getAmount());
         }
+
+        TransactionMaxValues settings = transactionMaxValuesRepository
+                .findById(1L).orElse(new TransactionMaxValues(maxAllow, maxManual));
+        settings.setMaxAllow(maxAllow);
+        settings.setMaxManual(maxManual);
+        transactionMaxValuesRepository.save(settings);
     }
 
     public List<Transaction> list() {
