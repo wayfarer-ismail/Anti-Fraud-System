@@ -13,6 +13,7 @@ import antifraud.model.response.TransactionResponse;
 import antifraud.repository.TransactionMaxValuesRepository;
 import antifraud.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -31,6 +32,16 @@ public class TransactionService {
     double maxAllow = 200;
     double maxManual = 1500;
 
+    /**
+     * Constructor for the TransactionService class.
+     * Initializes the TransactionRepository, IpService, StolenCardService, and TransactionMaxValuesRepository instances.
+     * Also sets the maximum allowed and manual transaction amounts.
+     *
+     * @param transactionRepository The repository for transactions.
+     * @param ipService The service for IP-related operations.
+     * @param stolenCardService The service for stolen card-related operations.
+     * @param transactionMaxValuesRepository The repository for transaction max values.
+     */
     public TransactionService(TransactionRepository transactionRepository,
                               IpService ipService,
                               StolenCardService stolenCardService,
@@ -46,6 +57,7 @@ public class TransactionService {
         maxManual = maxValues.getMaxManual();
     }
 
+    @Transactional
     public TransactionResponse saveTransaction(TransactionRequest transactionRequest) {
         validateFields(transactionRequest);
 
@@ -57,6 +69,11 @@ public class TransactionService {
         return response;
     }
 
+    /**
+     * Resolves a transaction.
+     * Retrieves transactions with the same card number, applies rules to the transaction,
+     *  and returns a response based on the rules.
+     */
     private TransactionResponse resolveTransaction(Transaction transaction) {
         List<Transaction> transactions = transactionRepository.findByNumber(transaction.getNumber());
         ArrayList<String> info = new ArrayList<>(3);
@@ -66,6 +83,16 @@ public class TransactionService {
         return new TransactionResponse(result, info.stream().sorted().toList());
     }
 
+    /**
+     * Applies rules to a transaction.
+     * Checks various conditions and adds information to the info list based on these conditions.
+     * Returns a feedback based on the conditions.
+     *
+     * @param transaction The transaction to apply rules to.
+     * @param transactions The list of transactions with the same card number.
+     * @param info The list to add information to.
+     * @return The feedback of the transaction.
+     */
     private Feedback applyRules(Transaction transaction, List<Transaction> transactions, ArrayList<String> info) {
         // check if the card number is associated with transactions from more than two regions in the past hour
         if (countDistinctRegions(transaction, transactions) > 2) {
@@ -114,6 +141,18 @@ public class TransactionService {
         }
     }
 
+    /**
+     * Counts transactions based on distinct occurrences of a specified field within the past hour.
+     * Filters transactions based on a given filter and groups them by a
+     *      given groupBy function which is for mapping a getter.
+     * Returns the count of distinct groups.
+     *
+     * @param transaction The transaction to set time based on.
+     * @param transactions The list of transactions to count from.
+     * @param filter The filter to apply to the transactions.
+     * @param groupBy The function to group the transactions by (a getter).
+     * @return The count of distinct groups.
+     */
     private long countTransactionsFromDistinct(Transaction transaction,
                                                List<Transaction> transactions,
                                                Predicate<Transaction> filter,
@@ -154,6 +193,19 @@ public class TransactionService {
         }
     }
 
+    /**
+     * Updates the feedback of a transaction.
+     * Retrieves the transaction by its ID, validates the feedback, sets the feedback,
+     *  adjusts the max values, and saves the transaction to the database.
+     *
+     * @param request The request to update the transaction feedback.
+     * @return The updated transaction.
+     * @throws NotFoundException if the transaction does not exist
+     * @throws UnprocessableEntityException if the feedback is equal to the result
+     * @throws ConflictException if the transaction already has feedback
+     * @see #adjustMaxValues(Transaction)
+     */
+    @Transactional
     public Transaction updateTransactionFeedback(TransactionFeedbackRequest request) {
         Transaction transaction = transactionRepository.findById(request.transactionId())
                 .orElseThrow(() -> new NotFoundException("Transaction not found"));
@@ -169,11 +221,17 @@ public class TransactionService {
 
         transaction.setFeedback(feedback);
         adjustMaxValues(transaction);
-        System.out.println("maxAllow = " + maxAllow);
-        System.out.println("maxManual = " + maxManual);
         return transactionRepository.save(transaction);
     }
 
+    /**
+     * Adjusts the max values based on a transaction.
+     * Adjusts the max allowed and manual transaction amounts based on the feedback and
+     *  result of the transaction.
+     * Saves the new max values to the database.
+     *
+     * @param transaction The transaction to adjust the max values based on.
+     */
     private void adjustMaxValues(Transaction transaction) {
         Feedback validity = transaction.getResult();
         Feedback feedback = Feedback.valueOf(transaction.getFeedback());
@@ -198,6 +256,7 @@ public class TransactionService {
             maxManual = Math.ceil(0.8 * maxManual + 0.2 * transaction.getAmount());
         }
 
+        // save new max values to database for persistence
         TransactionMaxValues settings = transactionMaxValuesRepository
                 .findById(1L).orElse(new TransactionMaxValues(maxAllow, maxManual));
         settings.setMaxAllow(maxAllow);
@@ -205,11 +264,20 @@ public class TransactionService {
         transactionMaxValuesRepository.save(settings);
     }
 
-    public List<Transaction> list() {
+    public List<Transaction> listAll() {
         return transactionRepository.findAll();
     }
 
-    public List<Transaction> list(String number) {
+    /**
+     * Lists transactions by card number.
+     * Validates the card number using the Luhn algorithm and returns the transactions
+     *  with the specified card number.
+     *
+     * @param number The card number to list transactions by.
+     * @return The list of transactions with the specified card number.
+     * @see StolenCardService#validateLuhnAlgorithm(String)
+     */
+    public List<Transaction> listByNumber(String number) {
         StolenCardService.validateLuhnAlgorithm(number);
         return transactionRepository.findByNumber(number);
     }
