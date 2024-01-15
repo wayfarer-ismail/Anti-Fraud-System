@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/antifraud/transaction")
 public class TransactionController {
-
     TransactionService transactionService;
 
     public TransactionController(TransactionService transactionService) {

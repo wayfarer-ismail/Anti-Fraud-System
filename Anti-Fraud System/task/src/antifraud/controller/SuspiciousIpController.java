@@ -4,7 +4,6 @@ import antifraud.exception.BadRequestException;
 import antifraud.exception.ConflictException;
 import antifraud.exception.NotFoundException;
 import antifraud.model.Ip;
-import antifraud.model.request.IpRequest;
 import antifraud.service.IpService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,9 +21,9 @@ public class SuspiciousIpController {
     }
 
     @PostMapping
-    public ResponseEntity<?> saveSuspiciousIp(@RequestBody IpRequest ip) {
+    public ResponseEntity<?> saveSuspiciousIp(@RequestBody Map<String, String> request) {
         try {
-            Ip savedIp = ipService.saveSuspiciousIp(ip.getIp());
+            Ip savedIp = ipService.saveSuspiciousIp(request.get("ip"));
             return new ResponseEntity<>(savedIp, HttpStatus.OK);
         } catch (ConflictException e) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);

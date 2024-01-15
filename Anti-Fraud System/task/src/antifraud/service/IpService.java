@@ -12,7 +12,6 @@ import java.util.List;
 
 @Service
 public class IpService {
-
     IpRepository ipRepository;
 
     public IpService(IpRepository ipRepository) {

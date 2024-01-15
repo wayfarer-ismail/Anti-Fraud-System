@@ -13,7 +13,6 @@ import java.util.List;
 
 @Service
 public class StolenCardService {
-
     StolenCardRepository stolenCardRepository;
 
     public StolenCardService(StolenCardRepository stolenCardRepository) {

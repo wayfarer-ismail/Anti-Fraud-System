@@ -24,7 +24,6 @@ import static antifraud.model.enums.Feedback.*;
 
 @Service
 public class TransactionService {
-
     TransactionRepository transactionRepository;
     TransactionMaxValuesRepository transactionMaxValuesRepository;
     IpService ipService;

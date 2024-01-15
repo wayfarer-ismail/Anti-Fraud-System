@@ -15,7 +15,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 public class UserDetailController {
-
     UserDetailsServiceImpl userDetailsService;
 
     public UserDetailController(UserDetailsServiceImpl userDetailsService) {

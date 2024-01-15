@@ -21,7 +21,6 @@ import java.util.Optional;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
-
     private final UserRepository userRepository;
     private final PasswordEncoderConfig passwordEncoder;
 
@@ -113,5 +112,4 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         UserDAO updatedUser = userRepository.save(user);
         return updatedUser.toUserResponse();
     }
-
 }
