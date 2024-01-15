@@ -3,6 +3,7 @@ package antifraud.service;
 import antifraud.config.PasswordEncoderConfig;
 import antifraud.exception.BadRequestException;
 import antifraud.exception.ConflictException;
+import antifraud.exception.NotFoundException;
 import antifraud.model.UserDAO;
 import antifraud.model.request.UserRequest;
 import antifraud.model.response.UserResponse;
@@ -81,7 +82,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     public UserResponse updateUserRole(String username, String role) {
         UserDAO user = userRepository.findByUsernameIgnoreCase(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+                .orElseThrow(() -> new NotFoundException("User not found with username: " + username));
 
         if (!role.matches("SUPPORT|MERCHANT")) {
             throw new BadRequestException("Invalid role!");

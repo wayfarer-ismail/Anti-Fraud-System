@@ -1,7 +1,5 @@
 package antifraud.controller;
 
-import antifraud.exception.BadRequestException;
-import antifraud.exception.ConflictException;
 import antifraud.model.request.UserRequest;
 import antifraud.model.response.UserResponse;
 import antifraud.service.UserDetailsServiceImpl;
@@ -23,14 +21,8 @@ public class UserDetailController {
 
     @PostMapping("/user")
     public ResponseEntity<?> registerUser(@RequestBody UserRequest user) {
-        try {
-            UserResponse savedUser = userDetailsService.registerUser(user);
-            return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
-        } catch (ConflictException e) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
-        } catch (BadRequestException e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+        UserResponse savedUser = userDetailsService.registerUser(user);
+        return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
     }
 
     @GetMapping("/list")
@@ -52,27 +44,18 @@ public class UserDetailController {
         try {
             UserResponse updatedUser = userDetailsService.updateUserRole(request.get("username"), request.get("role"));
             return new ResponseEntity<>(updatedUser, HttpStatus.OK);
-
         } catch (UsernameNotFoundException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (ConflictException e) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 
     @PutMapping("/access")
     public ResponseEntity<?> updateUserLock(@RequestBody Map<String, String> request) {
-        if (request.containsKey("username") && request.containsKey("operation")) {
-            UserResponse updatedUser = userDetailsService.updateUserLock(request.get("username"), request.get("operation"));
-            return new ResponseEntity<>(Map.of(
-                    "status",
-                    String.format("User %s %sed!", updatedUser.username(), request.get("operation").toLowerCase())
-            ),
-                    HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
+        UserResponse updatedUser = userDetailsService.updateUserLock(request.get("username"), request.get("operation"));
+        return new ResponseEntity<>(Map.of(
+                "status",
+                String.format("User %s %sed!", updatedUser.username(), request.get("operation").toLowerCase())
+        ),
+                HttpStatus.OK);
     }
 }

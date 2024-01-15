@@ -1,6 +1,5 @@
 package antifraud.controller;
 
-import antifraud.exception.BadRequestException;
 import antifraud.service.TransactionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,15 +27,11 @@ public class TransactionHistoryController {
 
     @GetMapping("/{number}")
     public ResponseEntity<?> listTransactions(@PathVariable String number) {
-        try {
-            List<?> transactions = transactionService.list(number);
-            if (transactions.isEmpty()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-            return new ResponseEntity<>(transactions, HttpStatus.OK);
-        } catch (BadRequestException e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        List<?> transactions = transactionService.list(number);
+        if (transactions.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+        return new ResponseEntity<>(transactions, HttpStatus.OK);
     }
 
 }
