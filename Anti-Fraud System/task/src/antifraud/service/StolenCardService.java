@@ -13,7 +13,6 @@ import java.util.List;
 
 @Service
 public class StolenCardService {
-
     StolenCardRepository stolenCardRepository;
 
     public StolenCardService(StolenCardRepository stolenCardRepository) {
@@ -24,6 +23,14 @@ public class StolenCardService {
         return stolenCardRepository.findAll();
     }
 
+    /**
+     * This method saves a new stolen card to the database.
+     * It first validates the card number using the Luhn algorithm.
+     * If the card number is valid and not already in the database, it saves the card.
+     * If the card number is already in the database, it throws a ConflictException.
+     * @return the saved StolenCard object
+     */
+    @Transactional
     public StolenCard saveStolenCard(String number) {
         try {
             validateLuhnAlgorithm(number);
@@ -33,6 +40,13 @@ public class StolenCardService {
         }
     }
 
+    /**
+     * This method deletes a stolen card from the database.
+     * It first validates the card number using the Luhn algorithm.
+     * If the card number is valid and exists in the database, it deletes the card.
+     *
+     * @throws NotFoundException if the card number does not exist
+     */
     @Transactional
     public void deleteStolenCard(String number) {
         validateLuhnAlgorithm(number);
@@ -42,6 +56,10 @@ public class StolenCardService {
         }
     }
 
+    /**
+     * This is a static method that validates a card number using the Luhn algorithm.
+     * @throws BadRequestException if the card number is not valid
+     */
     public static void validateLuhnAlgorithm(String number) {
         int sum = 0;
         boolean alternate = false;

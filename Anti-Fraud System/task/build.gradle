@@ -1,13 +1,13 @@
 buildscript {
-    apply plugin: 'hyperskill'
+
 
     repositories {
         mavenCentral()
     }
 
     dependencies {
-        classpath "org.springframework.boot:spring-boot-gradle-plugin:$hs.spring.bootVersion"
-        classpath "io.spring.gradle:dependency-management-plugin:$hs.spring.dependencyManagementVersion"
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:3.0.2"
+        classpath "io.spring.gradle:dependency-management-plugin:1.0.11.RELEASE"
     }
 }
 

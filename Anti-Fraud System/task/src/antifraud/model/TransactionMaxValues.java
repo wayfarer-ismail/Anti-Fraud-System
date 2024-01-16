@@ -28,12 +28,12 @@ public class TransactionMaxValues {
         return maxAllow;
     }
 
-    public void setMaxAllow(double maxAllow) {
-        this.maxAllow = maxAllow;
-    }
-
     public double getMaxManual() {
         return maxManual;
+    }
+
+    public void setMaxAllow(double maxAllow) {
+        this.maxAllow = maxAllow;
     }
 
     public void setMaxManual(double maxManual) {
