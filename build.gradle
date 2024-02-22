@@ -1,12 +1,9 @@
-apply plugin: 'hyperskill'
-
 subprojects {
     apply plugin: 'application'
     apply plugin: 'java'
 
-    def userJava = Integer.parseInt(JavaVersion.current().getMajorVersion())
-    def hsJava = Integer.parseInt(hs.java.version)
-    def testJava = Math.max(userJava, hsJava)
+    def userJava = 17
+    def testJava = 17
 
     java.toolchain.languageVersion = JavaLanguageVersion.of(testJava)
 
@@ -24,12 +21,7 @@ subprojects {
 
     repositories {
         mavenCentral()
-        maven { url 'https://packages.jetbrains.team/maven/p/hyperskill-hs-test/maven' }
-		maven { url "https://jitpack.io" }
-    }
-
-    dependencies {
-        testImplementation 'com.github.hyperskill:hs-test:release-SNAPSHOT'
+        maven { url "https://jitpack.io" }
     }
 
     configurations.all {
@@ -66,5 +58,5 @@ configure(subprojects.findAll {it.name != 'util'}) {
 }
 
 wrapper {
-    gradleVersion = hs.gradle.version
+    gradleVersion = 7.6
 }
